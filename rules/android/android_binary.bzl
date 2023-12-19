@@ -2,7 +2,7 @@ load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = 
 load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "DATABINDING_DEPS")
-load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint_sources", "lint_test")
+load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint", "lint_sources", _lint_baseline = "baseline")
 load(":resources.bzl", "build_resources")
 
 def android_binary(
@@ -69,11 +69,14 @@ def android_binary(
     )
 
     lint_sources_target = "_" + name + "_lint_sources"
+    lint_baseline = _lint_baseline(lint_options.get("baseline", None))
     lint_sources(
         name = lint_sources_target,
         srcs = attrs.get("srcs", default = []),
         resources = [file for file in resource_files if file.endswith(".xml")],
         manifest = attrs.get("manifest"),
+        baseline = lint_baseline,
+        lint_config = lint_options.get("lint_config", None),
     )
 
     # Build deps
@@ -101,7 +104,8 @@ def android_binary(
         visibility = attrs.get("visibility", default = None),
     )
 
-    lint_test(
-        name = name + ".lint",
-        target = name,
+    lint(
+        name = name,
+        linting_target = name,
+        lint_baseline = lint_baseline,
     )

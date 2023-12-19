@@ -7,9 +7,8 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
+import com.grab.cli.WorkingDirectory
 import java.io.File
-import kotlin.io.path.exists
-import kotlin.io.path.readText
 import com.android.tools.lint.Main as LintCli
 
 class LintCommand : CliktCommand() {
@@ -70,6 +69,18 @@ class LintCommand : CliktCommand() {
         help = "Dependency target names"
     ).split(",").default(emptyList())
 
+    private val baseline by option(
+        "-b",
+        "--baseline",
+        help = "The lint baseline file"
+    ).convert { File(it) }
+
+    private val updatedBaseline by option(
+        "-ub",
+        "--updated-baseline",
+        help = "The lint baseline file"
+    ).convert { File(it) }.required()
+
     private val lintConfig by option(
         "-lc",
         "--lint-config",
@@ -87,60 +98,104 @@ class LintCommand : CliktCommand() {
         "--partial-results-dir",
     ).convert { File(it) }.required()
 
+    private val jdkHome by option(
+        "-j",
+        "--jdk-home",
+        help = "Path fo Java home"
+    ).required()
+
     private val verbose by option(
         "-v",
         "--verbose",
     ).flag(default = false)
 
     override fun run() {
-        val projectXml = ProjectXmlCreator().create(
-            name,
-            android,
-            library,
-            compileSdkVersion,
-            partialResults,
-            srcs,
-            resources,
-            classpath,
-            manifest,
-            mergedManifest,
-            dependencies.map { dependency ->
-                val (name, android, library, partialResultsDir) = dependency.split("^")
-                Dependency(name, android.toBoolean(), library.toBoolean(), File(partialResultsDir))
-            },
-            verbose
-        )
-        runLint(projectXml, analyzeOnly = true)
-        runLint(projectXml, analyzeOnly = false)
+        WorkingDirectory().use { dir ->
+            val workingDir = dir.dir
+
+            val projectXml = ProjectXmlCreator(workingDir = workingDir).create(
+                name = name,
+                android = android,
+                library = library,
+                compileSdkVersion = compileSdkVersion,
+                partialResults = partialResults,
+                srcs = srcs,
+                resources = resources,
+                classpath = classpath,
+                manifest = manifest,
+                mergedManifest = mergedManifest,
+                dependencies = dependencies.map(Dependency::from),
+                verbose = verbose
+            )
+
+            val lintBaseline = LintBaseline(workingDir, baseline, updatedBaseline, verbose)
+            val tmpBaseline = lintBaseline.prepare()
+
+            // Prepare JDK
+            // Lint uses $JAVA_HOME/release which is not provided by Bazel's JavaRuntimeInfo, so manually populate it
+            // Only MODULES is populated here since Lint only seem to use that
+            prepareJdk()
+
+            runLint(projectXml, tmpBaseline, analyzeOnly = true)
+            val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
+            lintBaseline.postProcess(baseline)
+
+            logResults()
+        }
     }
 
-    private fun runLint(projectXml: File, analyzeOnly: Boolean = false) {
-        val outputDir = File(".").toPath()
-        val baselineFile = outputDir.resolve("baseline.xml")
+    private fun runLint(projectXml: File, tmpBaseline: File, analyzeOnly: Boolean = false): File {
         LintCli().run(
             mutableListOf(
                 "--project", projectXml.toString(),
                 "--xml", outputXml.toString(),
-                "--baseline", baselineFile.toString(), //TODO(arun) Pass via action input
                 "--config", lintConfig.toString(),
-                "--update-baseline",
-                "--client-id", "test"
+
+                "--stacktrace",
+                //"--quiet",
+                "--exitcode",
+
+                "--baseline", tmpBaseline.absolutePath,
+                "--update-baseline", // Always update the baseline, so we can copy later if needed
+                //"--missing-baseline-is-empty-baseline",
+
+                "--offline", // Not a good practice to make bazel actions reach the network yet
+                "--client-id", "test",
+
+                "--jdk-home", jdkHome // Java home to use
             ).apply {
                 if (analyzeOnly) {
                     add("--analyze-only")
-                } /*else {
+                } else {
                     add("--report-only")
-                }*/
+                }
                 System.getenv("ANDROID_HOME")?.let { // TODO(arun) Need to revisit this.
                     add("--sdk-home")
                     add(it)
                 }
             }.toTypedArray()
         )
+        return tmpBaseline
+    }
+
+    private fun prepareJdk() {
+        File(jdkHome, "release").writeText(
+            ModuleLayer
+                .boot()
+                .modules()
+                .joinToString(separator = " ", prefix = "MODULES=\"", postfix = "\"") { it.name }
+        )
+    }
+
+    private fun logResults() {
         if (verbose) {
             if (outputXml.exists()) println(outputXml.readText())
-            if (partialResults.exists()) partialResults.walkTopDown().forEach { println("\t$it") }
-            if (baselineFile.exists()) println(baselineFile.readText())
+            if (partialResults.exists()) {
+                partialResults.walkTopDown()
+                    .filter { it.isFile }
+                    .forEach { println("\t$it") }
+            }
+            if (updatedBaseline.exists()) println(updatedBaseline.readText())
         }
     }
 }

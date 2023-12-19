@@ -3,7 +3,7 @@ load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "kt_db_android_library")
 load(":resources.bzl", "build_resources")
-load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint_sources", "lint_test")
+load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint", "lint_sources")
 
 def android_library(
         name,
@@ -53,11 +53,14 @@ def android_library(
     )
 
     lint_sources_target = "_" + name + "_lint_sources"
+    lint_baseline = lint_options.get("baseline", None)
     lint_sources(
         name = lint_sources_target,
         srcs = srcs,
         resources = [file for file in resource_files if file.endswith(".xml")],
         manifest = attrs.get("manifest"),
+        baseline = lint_baseline,
+        lint_config = lint_options.get("lint_config", None),
     )
 
     # Build deps
@@ -94,7 +97,8 @@ def android_library(
         plugins = attrs.get("plugins", default = None),
     )
 
-    lint_test(
-        name = name + ".lint",
-        target = name,
+    lint(
+        name = name,
+        linting_target = name,
+        lint_baseline = lint_baseline,
     )

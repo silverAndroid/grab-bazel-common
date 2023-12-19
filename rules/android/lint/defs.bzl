@@ -1,9 +1,43 @@
-load(":lint.bzl", _lint_test = "lint_test")
-load(":lint_sources.bzl", _lint_sources = "lint_sources")
+load(":lint.bzl", _lint = "lint")
+load(":utils.bzl", _baseline = "baseline")
 load(":providers.bzl", _LINT_ENABLED = "LINT_ENABLED")
+load(":lint_test.bzl", _lint_test = "lint_test")
+load(":lint_sources.bzl", _lint_sources = "lint_sources")
+load(":lint_update_baseline.bzl", _lint_update_baseline = "lint_update_baseline")
 
 LINT_ENABLED = _LINT_ENABLED
 
 # Rules
-lint_test = _lint_test
 lint_sources = _lint_sources
+baseline = _baseline
+
+def lint(
+        name,
+        linting_target,
+        lint_baseline):
+    """Runs android linting on the linting_target
+
+    Run bazelisk test <name>.lint_test to run Android lint on the target and produce the result XML
+    Run baselisk run <name>.lint_update_baseline to update the baseline for use with lint
+
+    Args:
+      name: The name of the lint target
+      linting_target: The Bazel target to run lint on
+      lint_baseline: The baseline XML file to compare results against
+    """
+
+    _lint(
+        name = name + ".lint",
+        target = linting_target,
+    )
+
+    _lint_test(
+        name = name + ".lint_test",
+        target = name + ".lint",
+    )
+
+    _lint_update_baseline(
+        name = name + ".lint_update_baseline",
+        target = name + ".lint",
+        baseline = lint_baseline,
+    )

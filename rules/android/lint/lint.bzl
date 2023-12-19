@@ -106,9 +106,12 @@ def _lint_action(
         manifest,
         merged_manifest,
         dep_lint_node_infos,
+        baseline,
+        updated_baseline,
         lint_config_xml_file,
         lint_result_xml_file,
         partial_results_dir,
+        jdk_home,
         verbose,
         inputs):
     args = ctx.actions.args()
@@ -154,12 +157,18 @@ def _lint_action(
     if len(merged_manifest) != 0:
         args.add("--merged-manifest", merged_manifest[0].path)
 
+    if baseline:
+        args.add("--baseline", baseline[0].path)
+    args.add("--updated-baseline", updated_baseline)
+
     args.add("--output-xml", lint_result_xml_file.path)
     args.add("--lint-config", lint_config_xml_file.path)
     args.add("--partial-results-dir", partial_results_dir.path)
 
     if verbose:  #TODO(arun) Pass via build config
         args.add("--verbose")
+
+    args.add("--jdk-home", jdk_home)
 
     mnemonic = "AndroidLint"
     ctx.actions.run(
@@ -168,6 +177,7 @@ def _lint_action(
         outputs = [
             partial_results_dir,
             lint_result_xml_file,
+            updated_baseline,
         ],
         executable = ctx.executable._lint_cli,
         arguments = [args],
@@ -202,10 +212,21 @@ def _lint_aspect_impl(target, ctx):
         # Result
         android_lint_info = None  # Current target's AndroidLintNodeInfo
         if enabled:
+            # Output
+            lint_updated_baseline_file = ctx.actions.declare_file("lint/" + target.label.name + "_updated_baseline.xml")
+
             sources = _collect_sources(target, ctx, library)
             compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
             dep_lint_node_infos = _dep_lint_node_infos(target, transitive_lint_node_infos)
             partial_results = [info.partial_results_dir for info in dep_lint_node_infos]
+
+            # Inputs
+            baseline_inputs = []
+            if sources.baseline:
+                baseline_inputs.append(sources.baseline[0])
+
+            # Pass JDK Home
+            java_runtime_info = ctx.attr._javabase[java_common.JavaRuntimeInfo]
 
             _lint_action(
                 ctx = ctx,
@@ -218,9 +239,12 @@ def _lint_aspect_impl(target, ctx):
                 manifest = sources.manifest,
                 merged_manifest = sources.merged_manifest,
                 dep_lint_node_infos = dep_lint_node_infos,
+                baseline = sources.baseline,
+                updated_baseline = lint_updated_baseline_file,
                 lint_config_xml_file = sources.lint_config_xml,
                 lint_result_xml_file = lint_result_xml_file,
                 partial_results_dir = partial_results_dir,
+                jdk_home = java_runtime_info.java_home,
                 verbose = False,
                 inputs = depset(
                     sources.srcs +
@@ -228,8 +252,9 @@ def _lint_aspect_impl(target, ctx):
                     sources.manifest +
                     sources.merged_manifest +
                     [sources.lint_config_xml] +
-                    partial_results,
-                    transitive = [sources.classpath],
+                    partial_results +
+                    baseline_inputs,
+                    transitive = [sources.classpath, java_runtime_info.files],
                 ),
             )
 
@@ -240,6 +265,7 @@ def _lint_aspect_impl(target, ctx):
                 enabled = enabled,
                 partial_results_dir = partial_results_dir,
                 lint_result_xml = lint_result_xml_file,
+                updated_baseline = lint_updated_baseline_file,
             )
         else:
             # No linting to do, just propagate transitive data
@@ -256,6 +282,7 @@ def _lint_aspect_impl(target, ctx):
                 enabled = enabled,
                 partial_results_dir = None,
                 lint_result_xml = lint_result_xml_file,
+                updated_baseline = None,
             )
         return AndroidLintInfo(
             info = android_lint_info,
@@ -275,47 +302,44 @@ lint_aspect = aspect(
             default = Label("//tools/lint:lint_cli"),
         ),
         "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
+        "_javabase": attr.label(
+            default = "@bazel_tools//tools/jdk:current_java_runtime",
+        ),
     },
     provides = [
         #AndroidLintInfo,
     ],
 )
 
-def _lint_test_impl(ctx):
+def _lint_impl(ctx):
     target = ctx.attr.target
     lint_result_xml_file = ctx.outputs.lint_result
-    executable = ctx.actions.declare_file("%s_lint.sh" % target.label.name)
 
     # Aspect would have calculated the results already during traversal, simply symlink it
     ctx.actions.symlink(
-        target_file = ctx.attr.target[AndroidLintInfo].info.lint_result_xml,
+        target_file = target[AndroidLintInfo].info.lint_result_xml,
         output = ctx.outputs.lint_result,
     )
-
-    ctx.actions.write(
-        output = executable,
-        is_executable = False,
-        content = """
-    #!/bin/bash
-    # TODO: Read result code from Provider and fail the test
-    cat {lint_result}
-            """.format(
-            lint_result = lint_result_xml_file.short_path,
+    return [
+        DefaultInfo(
+            files = depset([
+                ctx.outputs.lint_result,
+            ]),
         ),
-    )
+        target[AndroidLintInfo],  # Forward the provider
+    ]
 
-    return [DefaultInfo(
-        executable = executable,
-        runfiles = ctx.runfiles(files = [lint_result_xml_file]),
-        files = depset([
-            ctx.outputs.lint_result,
-        ]),
-    )]
-
-lint_test = rule(
-    implementation = _lint_test_impl,
+lint = rule(
+    implementation = _lint_impl,
     attrs = {
-        "target": attr.label(aspects = [lint_aspect]),
+        "target": attr.label(
+            doc = "The android_binary or android_library that should be used for implementing linting on",
+            aspects = [lint_aspect],
+            providers = [
+                JavaInfo,
+            ],
+            mandatory = True,
+        ),
         "_lint_cli": attr.label(
             executable = True,
             cfg = "exec",
@@ -323,7 +347,6 @@ lint_test = rule(
         ),
         "_android_sdk": attr.label(default = "@androidsdk//:sdk"),  # Use toolchains later
     },
-    test = True,
     outputs = dict(
         lint_result = "%{name}_result.xml",
     ),
