@@ -16,6 +16,7 @@ import okio.buffer
 import okio.sink
 import okio.source
 import java.io.IOException
+import kotlin.IllegalStateException
 
 /**
  *  Implementation adapted from https://github.com/buildfoundation/bazel_rules_detekt/blob/master/detekt/wrapper/src/main/java/io/buildfoundation/bazel/detekt/stream/Streams.java
@@ -26,8 +27,7 @@ interface WorkerStreams {
 
     class DefaultWorkerStreams(private val streams: Streams) : WorkerStreams {
 
-        private class WorkRequestSource constructor(streams: Streams) :
-            FlowableOnSubscribe<WorkRequest> {
+        private class WorkRequestSource(val streams: Streams) : FlowableOnSubscribe<WorkRequest> {
             private val requestSource: BufferedSource
             private val requestAdapter: JsonAdapter<WorkRequest>
 
@@ -40,16 +40,20 @@ interface WorkerStreams {
             }
 
             override fun subscribe(emitter: FlowableEmitter<WorkRequest>) {
-                while (!emitter.isCancelled) {
-                    try {
-                        val request = requestAdapter.fromJson(requestSource)
-                        if (request == null) {
+                streams.use { io ->
+                    io.redirectSystemStreams()
+                    while (!emitter.isCancelled) {
+                        try {
+                            val request = requestAdapter.fromJson(requestSource)
+                            if (request == null) {
+                                emitter.onComplete()
+                            } else {
+                                emitter.onNext(request)
+                            }
+                        } catch (e: IOException) {
+                            e.printStackTrace()
                             emitter.onComplete()
-                        } else {
-                            emitter.onNext(request)
                         }
-                    } catch (e: IOException) {
-                        emitter.onComplete()
                     }
                 }
             }
@@ -73,6 +77,7 @@ interface WorkerStreams {
                     responseAdapter.toJson(responseSink, response)
                     responseSink.flush()
                 } catch (ignored: IOException) {
+                    ignored.printStackTrace()
                 }
             }
         }
