@@ -110,12 +110,15 @@ abstract class LintBaseCommand : CliktCommand() {
         "--compile-sdk-version",
     )
 
+    protected lateinit var sanitizer: Sanitizer
+
     @OptIn(FlowPreview::class)
     override fun run() {
         prepareJdk()
         runBlocking {
             WorkingDirectory().use {
                 val workingDir = it.dir
+                sanitizer = Sanitizer(tmpPath = it.dir)
                 val concurrency = Runtime.getRuntime().availableProcessors() / 2
                 val partialResults = resolveSymlinks(partialResults, workingDir)
 
@@ -139,18 +142,25 @@ abstract class LintBaseCommand : CliktCommand() {
                         verbose = verbose
                     )
                 }
-                val lintBaselineHandler = LintBaselineHandler(workingDir, inputBaseline, verbose)
-                val tmpBaseline = lintBaselineHandler.prepare()
-                run(workingDir, projectXml, tmpBaseline, lintBaselineHandler)
+                val tmpBaseline = workingDir.tmpBaseLine()
+                run(workingDir, projectXml, tmpBaseline)
             }
         }
+    }
+
+    private fun Path.tmpBaseLine(): File {
+        val tmpBaseline = this.resolve("baseline.xml").toFile()
+
+        if (inputBaseline?.exists() == true) {
+            inputBaseline?.copyTo(tmpBaseline)
+        }
+        return tmpBaseline
     }
 
     abstract fun run(
         workingDir: Path,
         projectXml: File,
         tmpBaseline: File,
-        lintBaselineHandler: LintBaselineHandler
     )
 
     /**
