@@ -31,11 +31,10 @@ class LintReportCommand : LintBaseCommand() {
     override fun run(
         workingDir: Path,
         projectXml: File,
-        tmpBaseline: File,
-        lintBaselineHandler: LintBaselineHandler
+        tmpBaseline: File
     ) {
         val newBaseline = runLint(workingDir, projectXml, tmpBaseline)
-        lintBaselineHandler.postProcess(newBaseline, updatedBaseline)
+        sanitizer.sanitize(newBaseline, updatedBaseline)
         LintResults(
             resultCodeFile = resultCode,
             lintResultsFile = outputXml
