@@ -9,6 +9,7 @@ class LintResults(
     val resultCodeFile: File,
     val lintResultsFile: File,
 ) {
+
     private fun NodeList.elements() = (0 until length).map { item(it) as Element }
 
     fun process() {

@@ -16,15 +16,14 @@
 
 package com.grab.aapt.databinding.rclass.parser
 
-
+import com.grab.aapt.databinding.common.BaseBindingStubTest
 import com.grab.aapt.databinding.rclass.parser.xml.DeclareStyleableParser
 import com.grab.aapt.databinding.rclass.parser.xml.DefaultXmlParser
-import com.grab.test.BaseTest
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
 
-class ResToRStyleableValueParserTest : BaseTest() {
+class ResToRStyleableValueParserTest : BaseBindingStubTest() {
 
     private lateinit var resToRParser: ResToRParser
     private val value = "0"

@@ -1,8 +1,7 @@
 package com.grab.aapt.databinding.binding.store
 
 import com.grab.aapt.databinding.binding.store.CachingBindingClassJsonParserTest.Companion.DEFAULT_JSON_CONTENT
-import com.grab.test.BaseTest
-
+import com.grab.aapt.databinding.common.BaseBindingStubTest
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.TypeName
 import org.junit.Before
@@ -15,7 +14,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class DependenciesLayoutTypeStoreTest : BaseTest() {
+class DependenciesLayoutTypeStoreTest : BaseBindingStubTest() {
 
     private lateinit var dependenciesLayoutTypeStore: DependenciesLayoutTypeStore
 

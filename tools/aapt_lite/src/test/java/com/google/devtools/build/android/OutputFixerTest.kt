@@ -1,15 +1,16 @@
 package com.google.devtools.build.android
 
 import com.google.devtools.build.android.OutputFixer.EMPTY_RES_CONTENT
-import com.grab.test.BaseTest
+import com.grab.aapt.databinding.common.BaseBindingStubTest
 import org.junit.Test
+import java.nio.file.Files
 import kotlin.test.assertTrue
 
-class OutputFixerTest : BaseTest() {
+class OutputFixerTest : BaseBindingStubTest() {
 
     @Test
     fun `assert merged directories does not contain qualifiers`() {
-        val tmp = temporaryFolder.newFolder("tmp")
+        val tmp = Files.createTempDirectory("tmp").toFile()
         buildTestRes(tmp) {
             "res/values-v4/strings.xml" {
                 """<?xml version="1.0" encoding="UTF-8" standalone="no"?><resources/>"""
@@ -32,7 +33,7 @@ class OutputFixerTest : BaseTest() {
 
     @Test
     fun `assert missing xml files are stubbed with empty resource file`() {
-        val tmp = temporaryFolder.newFolder("tmp")
+        val tmp = Files.createTempDirectory("missing").toFile()
         OutputFixer.process(
             outputDir = tmp,
             declaredOutputs = sequenceOf("res/values/strings.xml", "res/values-in/strings.xml")
@@ -49,7 +50,7 @@ class OutputFixerTest : BaseTest() {
 
     @Test
     fun `assert qualifiers are retained if provided output file paths already contain them`() {
-        val tmp = temporaryFolder.newFolder("tmp")
+        val tmp = Files.createTempDirectory("tmp").toFile()
         buildTestRes(tmp) {
             "res/values-v4/strings.xml" {
                 """<?xml version="1.0" encoding="UTF-8" standalone="no"?><resources/>"""
