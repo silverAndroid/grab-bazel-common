@@ -8,10 +8,20 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import com.github.ajalt.clikt.parameters.options.split
 import com.grab.cli.WorkingDirectory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.nio.file.Path
 import com.android.tools.lint.Main as LintCli
 
 class LintCommand : CliktCommand() {
+    val concurrency = Runtime.getRuntime().availableProcessors() / 2
 
     private val name by option(
         "-n",
@@ -134,8 +144,7 @@ class LintCommand : CliktCommand() {
                 verbose = verbose
             )
 
-            val lintBaseline = LintBaseline(workingDir, orgBaseline, updatedBaseline, verbose)
-            val tmpBaseline = lintBaseline.prepare()
+            val tmpBaseline = workingDir.tmpBaseLine()
 
             // Prepare JDK
             // Lint uses $JAVA_HOME/release which is not provided by Bazel's JavaRuntimeInfo, so manually populate it
@@ -143,12 +152,41 @@ class LintCommand : CliktCommand() {
             prepareJdk()
 
             runLint(projectXml, tmpBaseline, analyzeOnly = true)
+            sanitizePartialResults(workingDir)
+
             val baseline = runLint(projectXml, tmpBaseline, analyzeOnly = false)
-            lintBaseline.postProcess(baseline)
+            Sanitizer(tmpPath = workingDir).sanitize(baseline, updatedBaseline)
 
             processResults()
             LintResults(resultCodeFile = resultCode, lintResultsFile = outputXml).process()
         }
+    }
+
+    private fun sanitizePartialResults(workingDir: Path) = runBlocking {
+        partialResults.listFiles().flatMap {
+            if (it.isDirectory) {
+                it.listFiles().toList()
+            } else {
+                listOf(it)
+            }
+        }.filter { it.isFile }
+            .asFlow().flatMapMerge(concurrency) { partialResults ->
+                flow {
+                    emit(partialResults)
+                }
+            }.map {
+                Sanitizer(tmpPath = workingDir).sanitize(it)
+            }.flowOn(Dispatchers.IO)
+            .collect()
+    }
+
+    private fun Path.tmpBaseLine(): File {
+        val tmpBaseline = this.resolve("baseline.xml").toFile()
+
+        if (orgBaseline?.exists() == true) {
+            orgBaseline?.copyTo(tmpBaseline)
+        }
+        return tmpBaseline
     }
 
     private fun processResults() {
