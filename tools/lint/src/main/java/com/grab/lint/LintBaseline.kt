@@ -3,9 +3,10 @@ package com.grab.lint
 import java.io.File
 import java.nio.file.Path
 
-class LintBaselineHandler(
+class LintBaseline(
     private val workingDir: Path,
     private val orgBaselineFile: File?,
+    private val updatedBaseline: File,
     private val verbose: Boolean,
     private val env: Env = Env.BazelEnv
 ) {
@@ -17,7 +18,7 @@ class LintBaselineHandler(
         return tmpBaseline
     }
 
-    fun postProcess(newBaseline: File, updatedBaseline: File) {
+    fun postProcess(newBaseline: File) {
         // Sanitize the updated baseline to baseline output
         if (verbose) println("Copying $newBaseline to $updatedBaseline")
         val calcExecRoot = execRootRegex()
@@ -60,8 +61,7 @@ class LintBaselineHandler(
                 ?.dropWhile { char -> char == '.' || char == '/' } // Clean ../
                 ?.replace(calcExecRoot, "")
                 ?.let { fixedPath ->
-                    val indent = line.split("file=").first() // Retain indent and write file="updated path"
-                    "${indent}file=\"$fixedPath\"$suffix"
+                    "${line.split("file=").first()}file=\"$fixedPath\"$suffix" // Retain indent and write file="updated path"
                 } ?: line
         } else line
     }
