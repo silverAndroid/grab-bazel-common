@@ -41,9 +41,9 @@ class LintAnalyzeCommand : LintBaseCommand() {
             .forEach { path ->
                 if ("lint-definite-all.xml" in path.name) {
                     Files.delete(path)
-                } else {
+                } /*else {
                     Sanitizer(tmpPath = workingDir).sanitize(path.toFile())
-                }
+                }*/
             }
     }
 }

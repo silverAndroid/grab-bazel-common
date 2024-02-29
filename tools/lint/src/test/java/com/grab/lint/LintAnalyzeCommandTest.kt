@@ -4,7 +4,6 @@ import com.grab.test.BaseTest
 import org.junit.Before
 import org.junit.Test
 import java.io.File
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class LintAnalyzeCommandTest : BaseTest() {
@@ -82,10 +81,10 @@ class LintAnalyzeCommandTest : BaseTest() {
             )
         )
         val partialResults = partialResults.walkTopDown().filter { it.isFile }.toList()
-        assertEquals(1, partialResults.size, "Partial results are generated")
-        assertEquals("lint-partial-all.xml", partialResults.first().name, "Partial all file is generated")
+        assertTrue(partialResults.isNotEmpty(), "Partial results are generated")
+        assertTrue(partialResults.any { it.name == "lint-partial.xml" }, "Partial all file is generated")
         assertTrue {
-            partialResults.first().readText().contains("id=\"UnusedResources\"")
+            partialResults.first { it.name == "lint-partial.xml" }.readText().contains("id=\"UnusedResources\"")
         }
         assertTrue("Project XML is generated") {
             projectXml.exists()

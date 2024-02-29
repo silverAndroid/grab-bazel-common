@@ -34,7 +34,7 @@ class LintReportCommand : LintBaseCommand() {
         tmpBaseline: File,
     ) {
         val newBaseline = runLint(workingDir, projectXml, tmpBaseline)
-        Sanitizer(tmpPath = workingDir).sanitize(newBaseline, updatedBaseline)
+        newBaseline.copyTo(updatedBaseline)
         LintResults(
             resultCodeFile = resultCode,
             lintResultsFile = outputXml
@@ -52,6 +52,7 @@ class LintReportCommand : LintBaseCommand() {
             "--project", projectXml.toString(),
             "--xml", outputXml.toString(),
             "--baseline", tmpBaseline.absolutePath,
+            "--path-variables", pathVariables,
             "--cache-dir", workingDir.resolve("cache").pathString,
             "--update-baseline", // Always update the baseline, so we can copy later if needed
             "--report-only" // Only do reporting

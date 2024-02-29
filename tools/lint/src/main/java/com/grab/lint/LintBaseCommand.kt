@@ -103,6 +103,10 @@ abstract class LintBaseCommand : CliktCommand() {
         "--compile-sdk-version",
     )
 
+    protected val pathVariables by option(
+        "--path-variables"
+    ).default("${PWD}=${System.getenv(PWD)}")
+
     override fun run() {
         preRun()
         prepareJdk()
@@ -196,5 +200,9 @@ abstract class LintBaseCommand : CliktCommand() {
                 )
             }
         }
+    }
+
+    companion object {
+        private const val PWD = "PWD"
     }
 }
