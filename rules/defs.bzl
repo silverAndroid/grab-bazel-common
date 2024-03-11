@@ -5,7 +5,7 @@ load("@grab_bazel_common//rules/android:test.bzl", _android_unit_test = "android
 load(
     "@grab_bazel_common//rules/kotlin:kotlin.bzl",
     _kt_compiler_plugin = "kt_compiler_plugin",
-    _kt_jvm_library = "kt_jvm_library",
+    _kt_jvm_library_interal = "kt_jvm_library_interal",
 )
 load("@grab_bazel_common//rules/kotlin:test.bzl", _kotlin_test = "kotlin_test")
 
@@ -16,6 +16,6 @@ android_instrumentation_binary = _android_instrumentation_binary
 android_unit_test = _android_unit_test
 
 # Kotlin
-kotlin_library = _kt_jvm_library
+kotlin_library = _kt_jvm_library_interal
 kt_compiler_plugin = _kt_compiler_plugin
 kotlin_test = _kotlin_test

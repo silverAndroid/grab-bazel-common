@@ -56,7 +56,7 @@ def _collect_sources(target, ctx, library):
             lint_config_xml = dep[AndroidLintSourcesInfo].lint_config[0],
             classpath = classpath,
         )
-        for dep in ctx.rule.attr.deps
+        for dep in (ctx.rule.attr.deps + getattr(ctx.rule.attr, "exports", []))
         if AndroidLintSourcesInfo in dep
     ]
     if len(sources) > 1:
@@ -322,7 +322,7 @@ def _lint_aspect_impl(target, ctx):
         transitive_lint_node_infos = _transitive_lint_node_infos(ctx)
 
         # Result
-        android_lint_info = None  # Current target's AndroidLintNodeInfo
+        android_lint_node_info = None  # Current target's AndroidLintNodeInfo
         if enabled:
             # Output
             lint_updated_baseline_file = ctx.actions.declare_file("lint/" + target.label.name + "_updated_baseline.xml")
@@ -427,7 +427,7 @@ def _lint_aspect_impl(target, ctx):
                 ],
             )
 
-            android_lint_info = AndroidLintNodeInfo(
+            android_lint_node_info = AndroidLintNodeInfo(
                 name = str(target.label),
                 android = android,
                 library = library,
@@ -438,7 +438,7 @@ def _lint_aspect_impl(target, ctx):
                 updated_baseline = lint_updated_baseline_file,
             )
         else:
-            android_lint_info = AndroidLintNodeInfo(
+            android_lint_node_info = AndroidLintNodeInfo(
                 name = str(target.label),
                 android = android,
                 library = library,
@@ -449,9 +449,9 @@ def _lint_aspect_impl(target, ctx):
                 updated_baseline = None,
             )
         return AndroidLintInfo(
-            info = android_lint_info,
+            info = android_lint_node_info,
             transitive_nodes = depset(
-                [android_lint_info],
+                [android_lint_node_info],
                 transitive = [depset(transitive = [transitive_lint_node_infos])],
             ),
         )

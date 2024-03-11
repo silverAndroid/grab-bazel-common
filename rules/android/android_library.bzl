@@ -52,19 +52,28 @@ def android_library(
         res_values = res_values,
     )
 
-    lint_sources_target = "_" + name + "_lint_sources"
-    lint_baseline = lint_options.get("baseline", None)
-    lint_sources(
-        name = lint_sources_target,
-        srcs = srcs,
-        resources = [file for file in resource_files if file.endswith(".xml")],
-        manifest = attrs.get("manifest"),
-        baseline = lint_baseline,
-        lint_config = lint_options.get("lint_config", None),
-    )
+    lint_enabled = lint_options.get("enabled", False) and (len(srcs) > 0 or len(resource_files) > 0)
+    android_library_deps = attrs.get("deps", default = []) + [build_config_target]
+    tags = attrs.get("tags", default = [])
+    if lint_enabled:
+        lint_sources_target = "_" + name + "_lint_sources"
+        lint_baseline = lint_options.get("baseline", None)
+        lint_sources(
+            name = lint_sources_target,
+            srcs = srcs,
+            resources = [file for file in resource_files if file.endswith(".xml")],
+            manifest = attrs.get("manifest"),
+            baseline = lint_baseline,
+            lint_config = lint_options.get("lint_config", None),
+        )
+        android_library_deps = android_library_deps + [lint_sources_target]
+        lint(
+            name = name,
+            linting_target = name,
+            lint_baseline = lint_baseline,
+        )
+        tags = tags + [LINT_ENABLED]
 
-    # Build deps
-    android_library_deps = attrs.get("deps", default = []) + [build_config_target, lint_sources_target]
     if enable_compose:
         android_library_deps.extend(["@grab_bazel_common//rules/android/compose:compose-plugin"])
 
@@ -92,13 +101,7 @@ def android_library(
         assets = attrs.get("assets", default = None),
         assets_dir = attrs.get("assets_dir", default = None),
         visibility = attrs.get("visibility", default = None),
-        tags = attrs.get("tags", default = []) + [LINT_ENABLED],
+        tags = tags,
         deps = android_library_deps,
         plugins = attrs.get("plugins", default = None),
-    )
-
-    lint(
-        name = name,
-        linting_target = name,
-        lint_baseline = lint_baseline,
     )
