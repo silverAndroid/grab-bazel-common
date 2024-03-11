@@ -2,7 +2,7 @@ load("@grab_bazel_common//tools/build_config:build_config.bzl", _build_config = 
 load("@grab_bazel_common//tools/res_value:res_value.bzl", "res_value")
 load("@grab_bazel_common//tools/kotlin:android.bzl", "kt_android_library")
 load("@grab_bazel_common//rules/android/databinding:databinding.bzl", "DATABINDING_DEPS")
-load("@grab_bazel_common//rules/android/lint:defs.bzl", "lint", "lint_sources", _lint_baseline = "baseline")
+load("@grab_bazel_common//rules/android/lint:defs.bzl", "LINT_ENABLED", "lint", "lint_sources", _lint_baseline = "baseline")
 load(":resources.bzl", "build_resources")
 
 def android_binary(
@@ -68,19 +68,30 @@ def android_binary(
         deps = kotlin_library_deps,
     )
 
-    lint_sources_target = "_" + name + "_lint_sources"
-    lint_baseline = _lint_baseline(lint_options.get("baseline", None))
-    lint_sources(
-        name = lint_sources_target,
-        srcs = attrs.get("srcs", default = []),
-        resources = [file for file in resource_files if file.endswith(".xml")],
-        manifest = attrs.get("manifest"),
-        baseline = lint_baseline,
-        lint_config = lint_options.get("lint_config", None),
-    )
+    lint_enabled = lint_options.get("enabled", False) and (len(attrs.get("srcs", default = [])) > 0 or len(resource_files) > 0)
+    tags = []
+    android_binary_deps = [kotlin_target]
+    if lint_enabled:
+        lint_sources_target = "_" + name + "_lint_sources"
+        lint_baseline = _lint_baseline(lint_options.get("baseline", None))
+        lint_sources(
+            name = lint_sources_target,
+            srcs = attrs.get("srcs", default = []),
+            resources = [file for file in resource_files if file.endswith(".xml")],
+            manifest = attrs.get("manifest"),
+            baseline = lint_baseline,
+            lint_config = lint_options.get("lint_config", None),
+        )
 
-    # Build deps
-    android_binary_deps = [kotlin_target, lint_sources_target]
+        # Build deps
+        android_binary_deps = android_binary_deps + [lint_sources_target]
+        tags = [LINT_ENABLED]
+        lint(
+            name = name,
+            linting_target = name,
+            lint_baseline = lint_baseline,
+        )
+
     if enable_data_binding:
         android_binary_deps.extend(DATABINDING_DEPS)
 
@@ -100,12 +111,6 @@ def android_binary(
         multidex = attrs.get("multidex", default = None),
         manifest_values = attrs.get("manifest_values", default = None),
         plugins = attrs.get("plugins", default = None),
-        tags = ["lint_enabled"],
+        tags = tags,
         visibility = attrs.get("visibility", default = None),
-    )
-
-    lint(
-        name = name,
-        linting_target = name,
-        lint_baseline = lint_baseline,
     )
