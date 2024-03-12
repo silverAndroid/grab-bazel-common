@@ -23,7 +23,7 @@ def kt_jvm_library_interal(
             name = lint_sources_target,
             srcs = attrs.get("srcs"),
             baseline = lint_baseline,
-            lint_config = lint_options.get("lint_config", None),
+            lint_config = lint_options.get("config", None),
         )
 
         lint(
