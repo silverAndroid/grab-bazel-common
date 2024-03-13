@@ -80,7 +80,7 @@ def android_binary(
             resources = [file for file in resource_files if file.endswith(".xml")],
             manifest = attrs.get("manifest"),
             baseline = lint_baseline,
-            lint_config = lint_options.get("lint_config", None),
+            lint_config = lint_options.get("config", None),
         )
 
         # Build deps
