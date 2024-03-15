@@ -44,7 +44,7 @@ def kt_jvm_library_interal(
 
 def add_value(attrs, name, value):
     if name in attrs and attrs[name] != None:
-        attrs[name] = attrs.get(name, default = []) + [value]
+        attrs[name] += value
     else:
-        attrs[name] = [value]
+        attrs[name] = value
     return attrs
