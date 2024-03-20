@@ -34,17 +34,10 @@ def kt_jvm_library_interal(
         tags = tags + [LINT_ENABLED]
         deps = deps + [lint_sources_target]
 
-        attrs = add_value(attrs, "deps", deps)
-        attrs = add_value(attrs, "tags", tags)
+        attrs["deps"] = deps
+        attrs["tags"] = tags
 
     kt_jvm_library(
         name = name,
         **attrs
     )
-
-def add_value(attrs, name, value):
-    if name in attrs and attrs[name] != None:
-        attrs[name] += value
-    else:
-        attrs[name] = value
-    return attrs
