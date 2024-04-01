@@ -2,10 +2,15 @@ package com.grab.lint
 
 import com.android.SdkConstants
 import java.io.File
-import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.io.path.exists
+
+private fun List<String>.lintJars(): Sequence<String> =
+    this.asSequence().map {
+        Paths.get(it).resolve("lint.jar")
+    }.filter { it.exists() }.map { it.toString() }
 
 class ProjectXmlCreator(
-    private val workingDir: Path,
     private val projectXml: File,
 ) {
 
@@ -34,6 +39,7 @@ class ProjectXmlCreator(
         modelsDir: File,
         srcs: List<String>,
         resources: List<String>,
+        aarDeps: List<String>,
         classpath: List<String>,
         manifest: File?,
         mergedManifest: File?,
@@ -70,6 +76,13 @@ class ProjectXmlCreator(
             // Certain detectors need res folder as input, eg: MissingTranslation
             resFolders(resources).forEach { resource ->
                 appendLine("  <resource file=\"$resource\" />")
+            }
+            aarDeps.lintJars().forEach {
+                appendLine("  <lint-checks jar=\"$it\" />")
+            }
+            aarDeps.forEach { aar ->
+                val aarInfo = aar.split("^")
+                appendLine("  <aar file=\"${aarInfo[0]}\" extracted=\"${aarInfo[1]}\" />")
             }
             manifest?.let { manifest ->
                 appendLine("  <manifest file=\"$manifest\" />")

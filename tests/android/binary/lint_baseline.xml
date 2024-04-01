@@ -20,6 +20,17 @@
     </issue>
 
     <issue
+        id="PrivateResource"
+        message="The resource `@color/material_blue_grey_950` is marked as private in material-1.2.1.aar"
+        errorLine1="    val material_res = com.google.android.material.R.color.material_blue_grey_950"
+        errorLine2="                                                           ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/java/com/grab/test/TestActivity.kt"
+            line="9"
+            column="60"/>
+    </issue>
+
+    <issue
         id="MissingVersion"
         message="Should set `android:versionCode` to specify the application version"
         errorLine1="&lt;manifest xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
