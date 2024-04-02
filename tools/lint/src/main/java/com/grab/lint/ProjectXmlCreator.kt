@@ -7,7 +7,7 @@ import kotlin.io.path.exists
 
 private fun List<String>.lintJars(): Sequence<String> =
     this.asSequence().map {
-        Paths.get(it).resolve("lint.jar")
+        Paths.get(it.split("^")[1]).resolve("lint.jar")
     }.filter { it.exists() }.map { it.toString() }
 
 class ProjectXmlCreator(
