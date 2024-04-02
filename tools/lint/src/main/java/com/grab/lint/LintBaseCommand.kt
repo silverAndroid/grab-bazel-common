@@ -112,6 +112,11 @@ abstract class LintBaseCommand : CliktCommand() {
         "--path-variables"
     ).default("${PWD}=${System.getenv(PWD)}")
 
+
+    protected val aarDeps by option(
+        "--aar_dirs"
+    ).split(",").default(emptyList())
+
     override fun run() {
         preRun()
         prepareJdk()
@@ -119,7 +124,6 @@ abstract class LintBaseCommand : CliktCommand() {
             val workingDir = it.dir
             val projectXml = if (!createProjectXml) projectXml else {
                 ProjectXmlCreator(
-                    workingDir = workingDir,
                     projectXml = projectXml
                 ).create(
                     name = name,
@@ -130,6 +134,7 @@ abstract class LintBaseCommand : CliktCommand() {
                     modelsDir = modelsDir,
                     srcs = srcs,
                     resources = resources,
+                    aarDeps = aarDeps,
                     classpath = classpath,
                     manifest = manifest,
                     mergedManifest = mergedManifest,

@@ -1,6 +1,8 @@
 load("@grab_bazel_common//rules/android:utils.bzl", "utils")
 load(
     "@grab_bazel_common//rules/android/lint:providers.bzl",
+    "AarInfo",
+    "AarNodeInfo",
     "AndroidLintInfo",
     "AndroidLintNodeInfo",
     "AndroidLintSourcesInfo",
@@ -50,6 +52,7 @@ def _collect_sources(target, ctx, library):
         struct(
             srcs = dep[AndroidLintSourcesInfo].srcs,
             resources = dep[AndroidLintSourcesInfo].resources,
+            aars = dep[AndroidLintSourcesInfo].aar_deps,
             manifest = dep[AndroidLintSourcesInfo].manifest,
             merged_manifest = merged_manifest,
             baseline = dep[AndroidLintSourcesInfo].baseline,
@@ -105,6 +108,15 @@ def _encode_dependency(dependency_info):
         dependency_info.models_dir.path,
     )
 
+def _encode_aars(aar_info):
+    """
+    Flatten the dependency details in a string to simplify arguments to Lint ClI
+    """
+    return "%s^%s" % (
+        aar_info.aar.path,
+        aar_info.aar_dir.path,
+    )
+
 def _lint_common_args(
         ctx,
         args,
@@ -113,6 +125,8 @@ def _lint_common_args(
         compile_sdk_version,
         srcs,
         resources,
+        aars,
+        aar_infos,
         classpath,
         manifest,
         merged_manifest,
@@ -140,6 +154,12 @@ def _lint_common_args(
         srcs,
         join_with = ",",
         map_each = utils.to_path,
+    )
+    args.add_joined(
+        "--aar_dirs",
+        aar_infos,
+        join_with = ",",
+        map_each = _encode_aars,
     )
     args.add_joined(
         "--resource-files",
@@ -188,6 +208,8 @@ def _lint_analyze_action(
         compile_sdk_version,
         srcs,
         resources,
+        aars,
+        aar_infos,
         classpath,
         manifest,
         merged_manifest,
@@ -211,6 +233,8 @@ def _lint_analyze_action(
         compile_sdk_version = compile_sdk_version,
         srcs = srcs,
         resources = resources,
+        aars = aars,
+        aar_infos = aar_infos,
         classpath = classpath,
         manifest = manifest,
         merged_manifest = merged_manifest,
@@ -250,6 +274,8 @@ def _lint_report_action(
         compile_sdk_version,
         srcs,
         resources,
+        aars,
+        aar_infos,
         classpath,
         manifest,
         merged_manifest,
@@ -276,6 +302,8 @@ def _lint_report_action(
         compile_sdk_version = compile_sdk_version,
         srcs = srcs,
         resources = resources,
+        aars = aars,
+        aar_infos = aar_infos,
         classpath = classpath,
         manifest = manifest,
         merged_manifest = merged_manifest,
@@ -312,6 +340,13 @@ def _lint_report_action(
         },
     )
     return
+
+def _aar_node_infos(aar_deps):
+    return [
+        aar_node_info
+        for aar_node_info in aar_deps.to_list()
+        if aar_node_info.aar != None
+    ]
 
 def _lint_aspect_impl(target, ctx):
     if target.label.workspace_root.startswith("external"):
@@ -355,6 +390,10 @@ def _lint_aspect_impl(target, ctx):
             dep_partial_results = [info.partial_results_dir for info in dep_lint_node_infos]
             dep_lint_models = [info.models_dir for info in dep_lint_node_infos]
 
+            aar_node_infos = _aar_node_infos(sources.aars)
+            aars = [info.aar for info in aar_node_infos]
+            aars_dir = [info.aar_dir for info in aar_node_infos]
+
             # Inputs
             baseline_inputs = []
             if sources.baseline:
@@ -382,6 +421,8 @@ def _lint_aspect_impl(target, ctx):
                 compile_sdk_version = compile_sdk_version,
                 srcs = sources.srcs,
                 resources = sources.resources,
+                aars = aars,
+                aar_infos = aar_node_infos,
                 classpath = sources.classpath,
                 manifest = sources.manifest,
                 merged_manifest = sources.merged_manifest,
@@ -396,6 +437,8 @@ def _lint_aspect_impl(target, ctx):
                 inputs = depset(
                     sources.srcs +
                     sources.resources +
+                    aars +
+                    aars_dir +
                     sources.manifest +
                     sources.merged_manifest +
                     [sources.lint_config_xml] +
@@ -418,6 +461,8 @@ def _lint_aspect_impl(target, ctx):
                 compile_sdk_version = compile_sdk_version,
                 srcs = sources.srcs,
                 resources = sources.resources,
+                aars = aars,
+                aar_infos = aar_node_infos,
                 classpath = sources.classpath,
                 manifest = sources.manifest,
                 merged_manifest = sources.merged_manifest,
@@ -435,6 +480,8 @@ def _lint_aspect_impl(target, ctx):
                 inputs = depset(
                     sources.srcs +
                     sources.resources +
+                    aars +
+                    aars_dir +
                     sources.manifest +
                     sources.merged_manifest +
                     [sources.lint_config_xml] +
