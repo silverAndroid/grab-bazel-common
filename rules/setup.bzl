@@ -58,9 +58,9 @@ def bazel_common_setup(
     maven_install(
         name = repo_name,
         artifacts = DAGGER_ARTIFACTS + [
-            "com.android.tools.lint:lint:31.4.0-alpha09",
-            "com.android.tools.lint:lint-checks:31.4.0-alpha09",
-            "com.android.tools.lint:lint-api:31.4.0-alpha09",
+            "com.android.tools.lint:lint:31.5.0-alpha02",
+            "com.android.tools.lint:lint-checks:31.5.0-alpha02",
+            "com.android.tools.lint:lint-api:31.5.0-alpha02",
             "com.google.guava:guava:29.0-jre",
             "com.google.auto:auto-common:0.10",
             "com.google.auto.service:auto-service:1.0-rc6",
