@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.4.0-alpha09" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha09">
+<issues format="6" by="lint 8.5.0-alpha02" type="baseline" client="" dependencies="true" name="" variant="all" version="8.5.0-alpha02">
 
     <issue
         id="LocaleFolder"
@@ -72,6 +72,17 @@
             file="../../../../../../../tests/android/binary/src/main/res/values-id/strings.xml"
             line="2"
             column="13"/>
+    </issue>
+
+    <issue
+        id="LogNotTimberTest"
+        message="Using &apos;Log&apos; instead of &apos;Timber&apos;"
+        errorLine1="        android.util.Log.d(&quot;SomeReallyLongTagForLintToDetectAndWarn&quot;, &quot;Log message&quot;)"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="../../../../../../../tests/android/binary/src/main/java/com/grab/test/TestActivity.kt"
+            line="13"
+            column="9"/>
     </issue>
 
     <issue

@@ -29,6 +29,7 @@ def _lint_sources_impl(ctx):
             manifest = _target_outputs([ctx.attr.manifest]),
             baseline = _target_outputs([ctx.attr.baseline]) if ctx.attr.baseline != None else None,
             lint_config = _target_outputs([ctx.attr.lint_config]) if ctx.attr.lint_config != None else _target_outputs([ctx.attr._default_lint_config]),
+            lint_checks = ctx.attr.lint_checks,
         ),
     ]
 
@@ -63,6 +64,12 @@ lint_sources = rule(
             allow_empty = True,
             default = [],
             aspects = [collect_aar_aspect],
+        ),
+        "lint_checks": attr.label_list(
+            doc = """custom lint rule targets in the project""",
+            allow_empty = True,
+            default = [],
+            providers = [JavaInfo],
         ),
         # TODO(arun) add assets
     },

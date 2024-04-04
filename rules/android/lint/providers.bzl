@@ -31,6 +31,7 @@ AndroidLintSourcesInfo = provider(
         manifest = "Android manifest file",
         baseline = "Lint baseline XML",
         lint_config = "Lint config XML",
+        lint_checks = "Custom Lint Targets",
     ),
 )
 
