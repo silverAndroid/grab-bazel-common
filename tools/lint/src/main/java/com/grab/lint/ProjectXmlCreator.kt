@@ -42,6 +42,7 @@ class ProjectXmlCreator(
         srcs: List<String>,
         resources: List<String>,
         aarDeps: List<String>,
+        projectCustomLintRules: List<String>,
         classpath: List<String>,
         resConfigs: List<String>,
         packageName: String?,
@@ -81,7 +82,7 @@ class ProjectXmlCreator(
             resFolders(resources).forEach { resource ->
                 appendLine("  <resource file=\"$resource\" />")
             }
-            aarDeps.lintJars().forEach {
+            (projectCustomLintRules + aarDeps.lintJars()).forEach {
                 appendLine("  <lint-checks jar=\"$it\" />")
             }
             aarDeps.forEach { aar ->

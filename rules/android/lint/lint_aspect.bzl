@@ -95,6 +95,7 @@ def _collect_sources(target, ctx, library):
             baseline = dep[AndroidLintSourcesInfo].baseline,
             lint_config_xml = dep[AndroidLintSourcesInfo].lint_config[0],
             classpath = classpath,
+            lint_checks = dep[AndroidLintSourcesInfo].lint_checks,
         )
         for dep in (ctx.rule.attr.deps + getattr(ctx.rule.attr, "exports", []))
         if AndroidLintSourcesInfo in dep
@@ -168,6 +169,7 @@ def _lint_common_args(
         res_config,
         aars,
         aar_infos,
+        lint_checks,
         classpath,
         manifest,
         merged_manifest,
@@ -209,6 +211,12 @@ def _lint_common_args(
         aar_infos,
         join_with = ",",
         map_each = _encode_aars,
+    )
+    args.add_joined(
+        "--lint_checks",
+        lint_checks,
+        join_with = ",",
+        map_each = utils.to_path,
     )
     args.add_joined(
         "--resource-files",
@@ -263,6 +271,7 @@ def _lint_analyze_action(
         res_config,
         aars,
         aar_infos,
+        lint_checks,
         classpath,
         manifest,
         merged_manifest,
@@ -292,6 +301,7 @@ def _lint_analyze_action(
         res_config = res_config,
         aars = aars,
         aar_infos = aar_infos,
+        lint_checks = lint_checks,
         classpath = classpath,
         manifest = manifest,
         merged_manifest = merged_manifest,
@@ -337,6 +347,7 @@ def _lint_report_action(
         res_config,
         aars,
         aar_infos,
+        lint_checks,
         classpath,
         manifest,
         merged_manifest,
@@ -369,6 +380,7 @@ def _lint_report_action(
         res_config = res_config,
         aars = aars,
         aar_infos = aar_infos,
+        lint_checks = lint_checks,
         classpath = classpath,
         manifest = manifest,
         merged_manifest = merged_manifest,
@@ -450,6 +462,9 @@ def _lint_aspect_impl(target, ctx):
             # Output - End
 
             sources = _collect_sources(target, ctx, library)
+
+            lint_checks = [jar.files.to_list()[0] for jar in sources.lint_checks]
+
             compile_sdk_version = _compile_sdk_version(ctx.attr._android_sdk)
             sdk_versions = _sdk_versions(ctx)
             res_config = _res_config(ctx)
@@ -495,6 +510,7 @@ def _lint_aspect_impl(target, ctx):
                 res_config = res_config,
                 aars = aars,
                 aar_infos = aar_node_infos,
+                lint_checks = lint_checks,
                 classpath = sources.classpath,
                 manifest = sources.manifest,
                 merged_manifest = sources.merged_manifest,
@@ -516,7 +532,8 @@ def _lint_aspect_impl(target, ctx):
                     [sources.lint_config_xml] +
                     dep_partial_results +
                     dep_lint_models +
-                    baseline_inputs,
+                    baseline_inputs +
+                    lint_checks,
                     transitive = [sources.classpath, java_runtime_info.files],
                 ),
                 outputs = [
@@ -539,6 +556,7 @@ def _lint_aspect_impl(target, ctx):
                 res_config = res_config,
                 aars = aars,
                 aar_infos = aar_node_infos,
+                lint_checks = lint_checks,
                 classpath = sources.classpath,
                 manifest = sources.manifest,
                 merged_manifest = sources.merged_manifest,
@@ -566,7 +584,8 @@ def _lint_aspect_impl(target, ctx):
                     [lint_partial_results_dir] +  # Current module partial results from analyze action
                     [lint_models_dir] +  # Current module models from analyze action
                     [project_xml_file] +  # Reuse project xml from analyze action
-                    baseline_inputs,
+                    baseline_inputs +
+                    lint_checks,
                     transitive = [sources.classpath, java_runtime_info.files],
                 ),
                 outputs = [

@@ -10,6 +10,7 @@ android_binary(
     lint_options = {
         "enabled": True,
         "baseline": "lint_baseline.xml",
+        "lint_checks": ["//tests/android/custom-lint-rules"],
     },
     manifest = "src/main/AndroidManifest.xml",
     manifest_values = {

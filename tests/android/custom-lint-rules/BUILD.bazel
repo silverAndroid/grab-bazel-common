@@ -1,0 +1,19 @@
+load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
+
+kotlin_library(
+    name = "custom-lint-rules",
+    srcs = glob([
+        "src/main/java/**/*.kt",
+    ]),
+    lint_options = {
+        "enabled": "true",
+    },
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        "//third_party/auto-service",
+        "@bazel_common_maven//:com_android_tools_lint_lint_api",
+        "@bazel_common_maven//:com_android_tools_lint_lint_checks",
+    ],
+)

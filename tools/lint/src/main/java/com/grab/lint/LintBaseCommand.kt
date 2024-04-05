@@ -139,9 +139,12 @@ abstract class LintBaseCommand : CliktCommand() {
         "--path-variables"
     ).default("${PWD}=${System.getenv(PWD)}")
 
-
     protected val aarDeps by option(
         "--aar_dirs"
+    ).split(",").default(emptyList())
+
+    protected val projectCustomLintRules by option(
+        "--lint_checks"
     ).split(",").default(emptyList())
 
     override fun run() {
@@ -162,6 +165,7 @@ abstract class LintBaseCommand : CliktCommand() {
                     srcs = srcs,
                     resources = resources,
                     aarDeps = aarDeps,
+                    projectCustomLintRules = projectCustomLintRules,
                     classpath = classpath,
                     packageName = packageName,
                     manifest = manifest,

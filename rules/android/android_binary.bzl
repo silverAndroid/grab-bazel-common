@@ -82,6 +82,7 @@ def android_binary(
             baseline = lint_baseline,
             lint_config = lint_options.get("config", None),
             deps = kotlin_library_deps,
+            lint_checks = lint_options.get("lint_checks", default = []),
         )
 
         # Build deps
