@@ -1,6 +1,7 @@
 package com.grab.lint
 
 import com.github.ajalt.clikt.parameters.options.convert
+import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
 import java.io.File
@@ -28,6 +29,18 @@ class LintReportCommand : LintBaseCommand() {
         help = "File containing result status of running Lint"
     ).convert { File(it) }.required()
 
+    private val failOnWarnings by option(
+        "-fow",
+        "--fail-on-warning",
+        help = "exit code 1 if it find Lint issues with severity of Warning"
+    ).convert { it.toBoolean() }.default(true)
+
+    private val failOnInformation by option(
+        "-foi",
+        "--fail-on-information",
+        help = "exit code 1 if it find Lint issues with severity of Information"
+    ).convert { it.toBoolean() }.default(true)
+
     override fun run(
         workingDir: Path,
         projectXml: File,
@@ -37,7 +50,9 @@ class LintReportCommand : LintBaseCommand() {
         newBaseline.copyTo(updatedBaseline)
         LintResults(
             resultCodeFile = resultCode,
-            lintResultsFile = outputXml
+            lintResultsFile = outputXml,
+            failOnWarnings = failOnWarnings,
+            failOnInformation = failOnInformation,
         ).process()
     }
 

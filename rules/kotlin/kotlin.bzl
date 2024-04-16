@@ -24,6 +24,8 @@ def kt_jvm_library_interal(
             srcs = attrs.get("srcs"),
             baseline = lint_baseline,
             lint_config = lint_options.get("config", None),
+            fail_on_warning = lint_options.get("fail_on_warning", default = True),
+            fail_on_information = lint_options.get("fail_on_information", default = True),
         )
 
         lint(

@@ -30,6 +30,8 @@ def _lint_sources_impl(ctx):
             baseline = _target_outputs([ctx.attr.baseline]) if ctx.attr.baseline != None else None,
             lint_config = _target_outputs([ctx.attr.lint_config]) if ctx.attr.lint_config != None else _target_outputs([ctx.attr._default_lint_config]),
             lint_checks = ctx.attr.lint_checks,
+            fail_on_warning = ctx.attr.fail_on_warning,
+            fail_on_information = ctx.attr.fail_on_information,
         ),
     ]
 
@@ -71,6 +73,8 @@ lint_sources = rule(
             default = [],
             providers = [JavaInfo],
         ),
+        "fail_on_warning": attr.bool(default = True, doc = "exit code 1 if it find Lint Issues with severity of Warning", mandatory = False),
+        "fail_on_information": attr.bool(default = True, doc = "exit code 1 if it find Lint Issues with severity of Warning", mandatory = False),
         # TODO(arun) add assets
     },
     provides = [

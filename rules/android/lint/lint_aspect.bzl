@@ -96,6 +96,8 @@ def _collect_sources(target, ctx, library):
             lint_config_xml = dep[AndroidLintSourcesInfo].lint_config[0],
             classpath = classpath,
             lint_checks = dep[AndroidLintSourcesInfo].lint_checks,
+            fail_on_warning = dep[AndroidLintSourcesInfo].fail_on_warning,
+            fail_on_information = dep[AndroidLintSourcesInfo].fail_on_information,
         )
         for dep in (ctx.rule.attr.deps + getattr(ctx.rule.attr, "exports", []))
         if AndroidLintSourcesInfo in dep
@@ -355,6 +357,8 @@ def _lint_report_action(
         baseline,
         updated_baseline,
         lint_config_xml_file,
+        fail_on_warning,
+        fail_on_information,
         lint_result_xml_file,
         partial_results_dir,
         jdk_home,
@@ -395,6 +399,8 @@ def _lint_report_action(
     )
 
     args.add("--updated-baseline", updated_baseline)
+    args.add("--fail-on-warning", fail_on_warning)
+    args.add("--fail-on-information", fail_on_information)
 
     args.add("--output-xml", lint_result_xml_file.path)
     args.add("--result-code", result_code)
@@ -564,6 +570,8 @@ def _lint_aspect_impl(target, ctx):
                 baseline = sources.baseline,
                 updated_baseline = lint_updated_baseline_file,
                 lint_config_xml_file = sources.lint_config_xml,
+                fail_on_warning = sources.fail_on_warning,
+                fail_on_information = sources.fail_on_information,
                 lint_result_xml_file = lint_result_xml_file,
                 partial_results_dir = lint_results_dir,
                 models_dir = lint_models_dir,
