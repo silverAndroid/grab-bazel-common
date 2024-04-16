@@ -67,6 +67,8 @@ def android_library(
             lint_config = lint_options.get("config", None),
             deps = android_library_deps,
             lint_checks = lint_options.get("lint_checks", default = []),
+            fail_on_warning = lint_options.get("fail_on_warning", default = True),
+            fail_on_information = lint_options.get("fail_on_information", default = True),
         )
         android_library_deps = android_library_deps + [lint_sources_target]
         lint(

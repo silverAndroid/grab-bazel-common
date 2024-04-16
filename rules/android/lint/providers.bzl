@@ -32,6 +32,8 @@ AndroidLintSourcesInfo = provider(
         baseline = "Lint baseline XML",
         lint_config = "Lint config XML",
         lint_checks = "Custom Lint Targets",
+        fail_on_warning = "fail on Lint issues with warning severity",
+        fail_on_information = "fail on Lint issues with information severity",
     ),
 )
 
