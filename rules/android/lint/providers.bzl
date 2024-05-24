@@ -17,6 +17,7 @@ AndroidLintNodeInfo = provider(
 AndroidLintInfo = provider(
     doc = "Provider containing info about lint on this target and it's dependencies",
     fields = dict(
+        inspect_info = "AndroidLintInspectInfo containing lint checks jars and aars directories that have custom lint checks",
         info = "AndroidLintNodeInfo containing data about Android Lint",
         transitive_nodes = "Depset of AndroidLintNodeInfo containing data about dependencies' lint",
     ),
@@ -44,6 +45,14 @@ AarNodeInfo = provider(
         "aar": "aar path",
         "aar_dir": "aar extracrted path",
     },
+)
+
+AndroidLintInspectInfo = provider(
+    doc = "AndroidLintInspectInfo containing lint checks jars and aars directories that have custom lint checks",
+    fields = dict(
+        lint_checks = "custom lint checks jar files",
+        aars_dirs = "path to extracted aar direcotries containing lint rules",
+    ),
 )
 
 AarInfo = provider(
