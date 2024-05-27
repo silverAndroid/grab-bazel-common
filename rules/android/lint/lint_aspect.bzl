@@ -4,6 +4,7 @@ load(
     "AarInfo",
     "AarNodeInfo",
     "AndroidLintInfo",
+    "AndroidLintInspectInfo",
     "AndroidLintNodeInfo",
     "AndroidLintSourcesInfo",
     "LINT_ENABLED",
@@ -485,7 +486,7 @@ def _lint_aspect_impl(target, ctx):
 
             aar_node_infos = _aar_node_infos(sources.aars)
             aars = [info.aar for info in aar_node_infos]
-            aars_dir = [info.aar_dir for info in aar_node_infos]
+            aars_dirs = [info.aar_dir for info in aar_node_infos]
 
             # Inputs
             baseline_inputs = []
@@ -536,7 +537,7 @@ def _lint_aspect_impl(target, ctx):
                     sources.srcs +
                     sources.resources +
                     aars +
-                    aars_dir +
+                    aars_dirs +
                     sources.manifest +
                     sources.merged_manifest +
                     [sources.lint_config_xml] +
@@ -588,7 +589,7 @@ def _lint_aspect_impl(target, ctx):
                     sources.srcs +
                     sources.resources +
                     aars +
-                    aars_dir +
+                    aars_dirs +
                     sources.manifest +
                     sources.merged_manifest +
                     [sources.lint_config_xml] +
@@ -609,7 +610,7 @@ def _lint_aspect_impl(target, ctx):
                     lint_result_code_file,
                 ],
             )
-
+            android_lint_inspect_info = AndroidLintInspectInfo(lint_checks = lint_checks, aars_dirs = aars_dirs)
             android_lint_node_info = AndroidLintNodeInfo(
                 name = str(target.label),
                 android = android,
@@ -634,8 +635,14 @@ def _lint_aspect_impl(target, ctx):
                 result_code = None,
                 updated_baseline = None,
             )
+            android_lint_inspect_info = AndroidLintInspectInfo(
+                lint_checks = None,
+                aars_dirs = None,
+            )
+
         return AndroidLintInfo(
             info = android_lint_node_info,
+            inspect_info = android_lint_inspect_info,
             transitive_nodes = depset(
                 [android_lint_node_info],
                 transitive = [depset(transitive = [transitive_lint_node_infos])],

@@ -1,7 +1,7 @@
 load("@grab_bazel_common//rules:defs.bzl", "kotlin_library")
 
 kotlin_library(
-    name = "lint",
+    name = "lint-inspector-lib",
     srcs = glob([
         "*.kt",
     ]),
@@ -9,12 +9,11 @@ kotlin_library(
         "//visibility:public",
     ],
     deps = [
-        "//:dagger",
-        "//tools/cli_utils",
-        "//tools/worker:worker_lib",
-        "@bazel_common_maven//:com_android_tools_lint_lint",
         "@bazel_common_maven//:com_android_tools_lint_lint_api",
         "@bazel_common_maven//:com_android_tools_lint_lint_checks",
         "@bazel_common_maven//:com_github_ajalt_clikt",
+        "@bazel_common_maven//:com_squareup_moshi_moshi_kotlin",
+        "@bazel_common_maven//:net_sf_kxml_kxml2",
+        "@bazel_common_maven//:xmlpull_xmlpull",
     ],
 )

@@ -16,8 +16,12 @@ def _collect_providers(provider_type, *all_deps):
                 providers.append(dep[provider_type])
     return providers
 
+def _to_depset(list):
+    return depset(list)
+
 utils = struct(
     to_path = _to_path,
     inspect = _inspect,
     collect_providers = _collect_providers,
+    to_depset = _to_depset,
 )

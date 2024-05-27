@@ -23,3 +23,16 @@ java_binary(
         "//tools/lint/src/main/java/com/grab/lint",
     ],
 )
+
+java_binary(
+    name = "lint_inspector",
+    #    jvm_flags = ["-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"],
+    main_class = "com.grab.lint.inspector.MainKt",
+    visibility = [
+        "//visibility:public",
+    ],
+    runtime_deps = [
+        "//tools/lint/src/main/java/com/grab/lint/inspector:lint-inspector-lib",
+    ],
+    #
+)
