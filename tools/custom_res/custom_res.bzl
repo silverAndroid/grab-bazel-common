@@ -23,7 +23,7 @@ def custom_res(target, dir_name, resource_files = []):
     new_root_dir = target + "_" + dir_name
     fixed_resource_path = []
     for old_resource_path in resource_files:
-        fixed_path = new_root_dir + "/" + old_resource_path.replace("/" + dir_name, "/res")
+        fixed_path = new_root_dir + "/" + old_resource_path.replace(dir_name + "/", "res/")
         fixed_resource_path.append(fixed_path)
         genrule_suffix = old_resource_path.replace("/", "_").replace(".", "_").replace("-", "_")
         native.genrule(
