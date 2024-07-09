@@ -16,17 +16,14 @@ common --incompatible_strict_action_env
 common --reuse_sandbox_directories
 common --repo_env=RJE_VERBOSE=true
 
-# Workers
-common --worker_verbose
-common --experimental_worker_multiplex
-common --experimental_shrink_worker_pool
-common --experimental_worker_for_repo_fetching=platform
-
 # JAVA - START
 common --experimental_strict_java_deps=off # Turn off strict java deps
-common --java_runtime_version=remotejdk_11 # Use inbuilt Java 11 for hermeticity
-common --tool_java_runtime_version=remotejdk_11
+common --java_runtime_version=remotejdk_17 # Use inbuilt Java 17 for hermeticity
+common --tool_java_runtime_version=remotejdk_17
+common --tool_java_language_version=17
+common --java_language_version=17
 common --jvmopt="-Djava.locale.providers=COMPAT,SPI" # Use Java 8 default locale provider
+common --jvmopt="--add-exports=java.xml/com.sun.org.apache.xerces.internal.dom=ALL-UNNAMED"
 common --experimental_java_classpath=bazel 
 common --experimental_java_header_input_pruning
 # JAVA - END
@@ -47,9 +44,16 @@ common --output_library_merged_assets=false # Turn off asset merging artifact
 # common --experimental_use_package_aware_rtxt=true # Use package aware R.txt files (required for databinding)
 # common --define=nontransitive_r_class=1 # Adapt bazel common rules for non transitive R class
 
+# Workers
+common --worker_verbose
+common --experimental_worker_multiplex
+common --experimental_shrink_worker_pool
+common --experimental_worker_for_repo_fetching=platform
+
 common --experimental_persistent_aar_extractor
 common --persistent_multiplex_android_tools
 common --persistent_android_dex_desugar
+
 common --strategy=DatabindingStubs=worker
 common --worker_max_instances=Javac=1
 common --worker_max_instances=KotlinCompile=1
@@ -78,6 +82,6 @@ run --ui_event_filters=-info,-stdout --noshow_progress
 
 # Ci Config
 common:ci --noshow_progress
-common:ci --color=no
+common:ci --color=yes
 
 try-import local.bazelrc
