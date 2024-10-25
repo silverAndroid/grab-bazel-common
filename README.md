@@ -28,7 +28,8 @@ bazel_common_dependencies()
 load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
 
 bazel_common_setup(
-    patched_android_tools = True # Optionally use patched android_tools jars
+    patched_android_tools = True, # Optionally use patched android_tools jars
+    buildifier_version = "6.3.3", # Optionally can specify buildifier version
 )
 
 load("@grab_bazel_common//rules:maven.bzl", "pin_bazel_common_dependencies")
