@@ -21,18 +21,17 @@ git_repository(
     remote = "https://github.com/grab/grab-bazel-common.git",
 )
 
-load("@grab_bazel_common//android:repositories.bzl", "bazel_common_dependencies")
+load("@grab_bazel_common//rules:repositories.bzl", "bazel_common_dependencies")
 
 bazel_common_dependencies()
 
-load("@grab_bazel_common//android:initialize.bzl", "bazel_common_initialize")
+load("@grab_bazel_common//rules:setup.bzl", "bazel_common_setup")
 
 bazel_common_setup(
-    patched_android_tools = True, # Optionally use patched android_tools jars
-    buildifier_version = "6.3.3",
+    patched_android_tools = True # Optionally use patched android_tools jars
 )
 
-load("@grab_bazel_common//android:maven.bzl", "pin_bazel_common_dependencies")
+load("@grab_bazel_common//rules:maven.bzl", "pin_bazel_common_dependencies")
 
 pin_bazel_common_dependencies()
 
